@@ -1,6 +1,9 @@
 go templates crash course
 go templates
 
+https://golang-examples.tumblr.com/post/87553422434/template-and-associated-templates
+https://www.mdaverde.com/posts/dynamic-template-creation-go/
+
 https://www.regisphilibert.com/blog/2018/02/hugo-the-scope-the-context-and-the-dot/
 https://blog.questionable.services/article/approximating-html-template-inheritance/
 https://news.ycombinator.com/item?id=17942395
@@ -69,3 +72,5 @@ AA: You can still define a custom type that underlying is map[string]interface{}
 
 Q: Can I has stateful functions?
 A: You cannot. Any variance in state -must- be inside the dot variable. A common pattern would then be to always pass the dot as the first argument in to functions that require state, and the functions can inspect the necessary values from the dot themselves. It's not pretty since it spills all data over to every function that receives the dot, but it's the best thing we have. That is, other than calling Clone()+Funcs()+Execute(), which is slow.
+
+I suspect calling .AddParseTree() or .Parse() after the template has been executed once will result in an error -- validate that fact
