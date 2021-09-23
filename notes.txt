@@ -1,0 +1,71 @@
+go templates crash course
+go templates
+
+https://www.regisphilibert.com/blog/2018/02/hugo-the-scope-the-context-and-the-dot/
+https://blog.questionable.services/article/approximating-html-template-inheritance/
+https://news.ycombinator.com/item?id=17942395
+"""
+If anyone is considering using Hugo, please account the tens of hours you will spend debugging its weirdness and magic. Yes, it's fast but it seems that ease-of-use was its lowest of the low priority. How variables work is impossible to understand. So is creating new layouts. Every change, however minor, involves fighting hard until I give up and settle for a hack.
+"""
+https://github.com/golang/go/issues/36462 (proposal: Revise the text/template, html/template execution)
+
+"A crash course on Go templates" - Bok Woon, developer @ Teckwah
+
+A quick talk on everything you need to know about Go templates. Topics I will cover:
+- Template composition
+- Syntax and variables
+- Functions, methods and pipes
+
+function variables must be invoked using call, while methods are called implicitly. link to the github issue of the hugo author talking about this.
+
+how do functions interact with each other when one template is added to another template? The weird thing I found was that you cannot overwrite an existing function, but neither can you call it.
+
+discuss multiline pipeline change?
+
+discuss function existence change?
+
+for every struct you pass in there is an equivalent JSON map[string]interface{} type that can be used
+
+pipelines can be truthy and falsy!
+https://github.com/golang/go/issues/28391
+"""
+The IsTrue, which is used in templates to determine if if and when etc. conditionals should be invoked makes sense in most situations.
+"""
+The notable example is a zero value time.Time which evaluates to true since structs are always truthy. The workaround would be to use a method call instead {{ if not t.IsZero }}
+
+don't parse templates in your hot loop (i.e. a request)
+
+you can parse multiple templates into a single template and use that template for everything
+
+extra topics: whitespace formatting {{- like this -}}
+
+once executed, additional templates cannot be added into the environment. you have to template.Clone() it, and then operate on the clone
+
+security #1: functions are defined once, you cannot change them dynamically
+
+secuirty #2: template list cannot change after execution, guarantees that templates do not change under your feet
+
+can you ... use the template functions like "_html_template_htmlescaper" in your templates?
+
+the most direct way to think about rendering go templates is that it is a template seeded by a single json object
+    why json? because for every struct you pass in there is a corresponding json object that achieves the same effect (with the caveat of no methods, of course)
+
+"templates references can be overwritten". Very natural right? You can declare variables, you can overwrite them. This very simple fact forms the basis of what other templating engines call 'template inheritence' to achieve.
+
+most tutorials use Parse exclusively which kinda suck for performance
+
+template files are like Go files, templates are like function definitions
+
+Q: Does Go have nested templates?
+A: Go does not have nested templates. Templates do not have a private list of other templates that they can call, all template references exist in one global map[string]*template.Template. This is probably for performance issues. You will need a sufficiently namespaced naming convention for each template to ensure that they don't conflict on a global level.
+
+Q: Can I invoke a template in a loop and pass both the dot and the dollar to the template?
+A: No, I can only think of a helper function dict to do this {{ template "" dict "dot" . "dollar" $ }}
+
+Q: I hate that I have to define every single data depedency in my template data struct just so that sub templates can receive the data they want. Is it possible to inject data in a middleware (e.g. CSP nonces and CSRF tokens)(https://github.com/golang/go/issues/31107) and have that data propagated to the template without requiring that the template explicitly inject it?
+A: Use a map[string]interface{} instead of a struct. You will have to change almost nothing and the call syntax still stays the same.
+QQ: But my methods!
+AA: You can still define a custom type that underlying is map[string]interface{}, then define methods on that type.
+
+Q: Can I has stateful functions?
+A: You cannot. Any variance in state -must- be inside the dot variable. A common pattern would then be to always pass the dot as the first argument in to functions that require state, and the functions can inspect the necessary values from the dot themselves. It's not pretty since it spills all data over to every function that receives the dot, but it's the best thing we have. That is, other than calling Clone()+Funcs()+Execute(), which is slow.
