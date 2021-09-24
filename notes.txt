@@ -74,3 +74,5 @@ Q: Can I has stateful functions?
 A: You cannot. Any variance in state -must- be inside the dot variable. A common pattern would then be to always pass the dot as the first argument in to functions that require state, and the functions can inspect the necessary values from the dot themselves. It's not pretty since it spills all data over to every function that receives the dot, but it's the best thing we have. That is, other than calling Clone()+Funcs()+Execute(), which is slow.
 
 I suspect calling .AddParseTree() or .Parse() after the template has been executed once will result in an error -- validate that fact
+
+make sure to cover the whitespace chomping mechanism too, but only in passing -- it's not a core concept
